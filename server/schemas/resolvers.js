@@ -4,9 +4,10 @@ const { signToken } = require('../utils/auth');
 
 const resolvers = {
   Query: {
-   getSingleUser: async(parent, {username})=>{
-     return User.findOne({username})
-   }
+    me: async (parent, args, context) => {
+      const findUser = await User.findOne({ _id: context.user._id })
+      return findUser
+    }
   },
 
   Mutation: {
@@ -15,6 +16,7 @@ const resolvers = {
       const token = signToken(user);
       return { token, user };
     },
+
     login: async (parent, { email, password }) => {
       const user = await User.findOne({ email });
 
@@ -32,35 +34,26 @@ const resolvers = {
 
       return { token, user };
     },
-    addThought: async (parent, { thoughtText }, context) => {
+    saveBook: async (parent, args, context) => {
       if (context.user) {
-        const thought = await Thought.create({
-          thoughtText,
-          thoughtAuthor: context.user.username,
-        });
-
-        await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
-          { $addToSet: { thoughts: thought._id } }
-        );
-
-        return thought;
+          { $addToSet: { savedBooks: args.bookData } },
+          { new: true, runValidators: true }
+        )
+        return updatedUser
       }
-      throw new AuthenticationError('You need to be logged in!');
+      throw new AuthenticationError('You need to be logged in!')
     },
-    removeThought: async (parent, { thoughtId }, context) => {
+    deleteBook: async (parent, {bookId}, context) => {
       if (context.user) {
-        const thought = await Thought.findOneAndDelete({
-          _id: thoughtId,
-          thoughtAuthor: context.user.username,
-        });
-
-        await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
-          { $pull: { thoughts: thought._id } }
+          { $pull: { savedBooks: { bookId } } },
+          { new: true }
         );
 
-        return thought;
+        return updatedUser;
       }
       throw new AuthenticationError('You need to be logged in!');
     },
