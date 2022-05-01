@@ -6,6 +6,7 @@
   - Motivation
 
     This project aims to use a MERN stack to make a book search engine. This project also uses GraphQL and Apollo.
+    There is currently an error in the mutations which is preventing the page from deploying properly. This is to be fixed soon.
   
   ![](./Assets/preview.gif)
 
